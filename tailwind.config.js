@@ -9,6 +9,7 @@ export const theme = {
 			accent: '#761BE4',
 			warning: '#ED4545',
 			background: '#F0EAF8',
+			backgroundError: '#FEECEC',
 		},
 		fontFamily: {
 			inter: ['Inter', 'sans-serif'],
@@ -16,4 +17,3 @@ export const theme = {
 	},
 }
 export const plugins = []
-
