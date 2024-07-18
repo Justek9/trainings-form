@@ -1,5 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from 'react'
 import Header from '../Header/Header'
+import CustomDatePicker from '../DatePicker/CustomDatePicker'
 
 type FormData = {
 	name: string
@@ -32,8 +33,39 @@ const Form: React.FC = () => {
 		hour: '',
 	})
 
+	const [holiday, setHolidays] = useState(null)
+
+	const getHolidays = () => {
+		const country = 'PL'
+		const year = '2024'
+		const API_KEY = '8DX8eEe67njS1lbThFsdSw==rQQNpQ8PYbPZBjrx'
+
+		const options = {
+			method: 'GET',
+			headers: {
+				'X-Api-Key': API_KEY,
+			},
+		}
+
+		fetch(`https://api.api-ninjas.com/v1/holidays?country=${country}&year=${year}`, options)
+			.then(res => res.json())
+			.then(data => setHolidays(data))
+			.catch(err => console.log(err))
+	}
+
+	useEffect(() => {
+		getHolidays()
+	}, [])
+
 	const [tooltipValue, setTooltipValue] = useState<number | string>(formData.age)
 	const [tooltipPosition, setTooltipPosition] = useState(0)
+
+	useEffect(() => {
+		const rangeInput = document.querySelector('.custom-range') as HTMLInputElement
+		if (rangeInput) {
+			rangeInput.style.setProperty('--value', `${tooltipPosition}%`)
+		}
+	}, [tooltipPosition])
 
 	useEffect(() => {
 		updateTooltipPosition(formData.age)
@@ -43,6 +75,7 @@ const Form: React.FC = () => {
 		const min = 8
 		const max = 100
 		const newPosition = ((Number(value) - min) / (max - min)) * 100
+		console.log(newPosition)
 		setTooltipPosition(newPosition)
 	}
 	const validateForm = () => {
@@ -198,6 +231,7 @@ const Form: React.FC = () => {
 						<span className='text-xs text-primary absolute end-0'>100</span>
 
 						<input
+							data-tooltip-target='tooltip-dark'
 							type='range'
 							id='age'
 							name='age'
@@ -209,16 +243,25 @@ const Form: React.FC = () => {
 								setTooltipValue(e.target.value)
 								updateTooltipPosition(e.target.value)
 							}}
-							className='w-full py-3 mt-1 focus:outline-none bg accent-accent focus-secondary bg-primary'
+							className='custom-range w-full py-3 mt-1 focus:outline-none bg accent-accent focus-secondary bg-primary'
 						/>
 						<div
-							className='absolute top-7 left-2 mt-8 transform -translate-x-1/2 border-b-secondary'
-							style={{ left: `calc(${tooltipPosition}% + 6px)` }}>
+							id='tooltip-dark'
+							role='tooltip'
+							className='absolute z-10  inline-block px-2 py-1 text-sm font-medium text-accent bg-white rounded-lg shadow-sm  tooltip dark:bg-gray-700'
+							data-tooltip-placement='bottom'
+							style={{ left: `calc(${tooltipPosition}% - 8px)` }}>
+							{tooltipValue}
+							<div className='tooltip-arrow' data-popper-arrow></div>
+						</div>
+						{/* <div
+							className='absolute top-7 mt-8 transform -translate-x-1/2 border-b-secondary'
+							style={{ left: `calc(${tooltipPosition}% + 8px)` }}>
 							<div className='relative bg-white border border-secondary text-primary text-xs text-center rounded px-2 py-1 w-8'>
 								{tooltipValue}
 								<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-b-4 border-b-secondary'></div>
 							</div>
-						</div>
+						</div> */}
 					</div>
 					<div className='mb-4'>
 						<label className='block text-sm text-primary'>Photo</label>
@@ -251,6 +294,8 @@ const Form: React.FC = () => {
 					</div>
 
 					<Header text='Your workout' />
+					<label className='block text-sm text-primary'>Date</label>
+					<CustomDatePicker  />
 
 					<div>
 						<label htmlFor='email' className='block text-sm text-primary'>
