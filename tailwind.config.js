@@ -10,6 +10,8 @@ export const theme = {
 			warning: '#ED4545',
 			background: '#F0EAF8',
 			backgroundError: '#FEECEC',
+			borderFocus: '#9747FF',
+			btnHover: '#6A19CD',
 			textGray: '#898DA9',
 		},
 		fontFamily: {

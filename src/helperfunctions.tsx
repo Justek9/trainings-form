@@ -29,9 +29,6 @@ export const validateForm = (formData: Data, setFormErrors: React.Dispatch<React
 
 	setFormErrors({ ...errors })
 
-	console.log('ED', errors)
-	console.log('FD', formData)
-
 	let isValid = true
 	for (let val in Object.values(errors)) {
 		if (val.length > 0) isValid = false

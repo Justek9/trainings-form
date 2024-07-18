@@ -2,10 +2,9 @@ import React, { ChangeEvent, useEffect, useState } from 'react'
 import Header from '../Header/Header'
 import CustomDatePicker from '../DatePicker/CustomDatePicker'
 import { Data, FormErrors } from '../../types'
-import { API_KEY_DATA, URL_POST_FD, countryCode, maxAge, minAge, times, yearSelected } from '../../utilsData'
+import { URL_POST_FD, maxAge, minAge, times } from '../../utilsData'
 import ErrorMessage from '../ErrorMessage/ErrorMessage'
 import { validateForm } from '../../helperfunctions'
-import { set } from 'react-datepicker/dist/date_utils'
 
 const Form: React.FC = () => {
 	const [formData, setFormData] = useState<Data>({
@@ -14,7 +13,7 @@ const Form: React.FC = () => {
 		email: '',
 		age: minAge,
 		photo: null,
-		date: '2024-07-18',
+		date: '',
 		hour: '',
 	})
 
@@ -25,28 +24,9 @@ const Form: React.FC = () => {
 	})
 
 	const [isSubmitBtnDisabled, setIsSubmitBtnDisabled] = useState(true)
-	const [holidays, setHolidays] = useState(null)
-
-	const getHolidays = () => {
-		const options = {
-			method: 'GET',
-			headers: {
-				'X-Api-Key': API_KEY_DATA,
-			},
-		}
-
-		fetch(`https://api.api-ninjas.com/v1/holidays?country=${countryCode}&year=${yearSelected}`, options)
-			.then(res => res.json())
-			.then(data => setHolidays(data))
-			.catch(err => console.log(err))
-	}
-
-	useEffect(() => {
-		getHolidays()
-	}, [])
-
 	const [tooltipValue, setTooltipValue] = useState<number | string>(formData.age)
 	const [tooltipPosition, setTooltipPosition] = useState(0)
+	const [deleteIconSrc, setDeleteIconSrc] = useState('./assets/delete.svg')
 
 	useEffect(() => {
 		const rangeInput = document.querySelector('.custom-range') as HTMLInputElement
@@ -68,8 +48,6 @@ const Form: React.FC = () => {
 		const max = Number(maxAge)
 
 		const newPosition = ((Number(value) - min) / (max - min)) * 100
-
-		console.log(newPosition)
 		setTooltipPosition(newPosition)
 	}
 
@@ -123,7 +101,7 @@ const Form: React.FC = () => {
 		fd.append('email', formData.email)
 		fd.append('age', formData.age)
 		fd.append('photo', formData.photo!)
-		fd.append('date', formData.date)
+		fd.append('date', formData.date!)
 		fd.append('hour', formData.hour)
 
 		const options = {
@@ -146,7 +124,7 @@ const Form: React.FC = () => {
 	}
 
 	return (
-		<section className='flex items-center justify-center min-h-screen bg-backgroud'>
+		<main className='flex items-center justify-center min-h-screen bg-backgroud'>
 			<div className='w-full max-w-md p-8 space-y-6'>
 				<Header text='Personal info' />
 				<form className='space-y-4' onSubmit={handleFormSubmit} noValidate>
@@ -159,10 +137,10 @@ const Form: React.FC = () => {
 							id='name'
 							value={formData.name}
 							onChange={e => handleInputChange('name', e.target.value)}
-							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border-2  ${
+							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border  ${
 								formErrors.name
 									? 'border-warning border-2 focus-ring-2 focus:border-warning bg-backgroundError'
-									: 'border-secondary focus:ring-secondary'
+									: 'border-secondary focus:ring-borderFocus'
 							}`}
 						/>
 						{formErrors.name && <ErrorMessage message={formErrors.name} />}
@@ -175,10 +153,10 @@ const Form: React.FC = () => {
 							type='text'
 							id='lastName'
 							name='lastName'
-							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border-2 ${
+							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border  ${
 								formErrors.lastName
 									? 'border-warning border-2 focus-ring-2 focus:border-warning bg-backgroundError'
-									: 'border-secondary focus:ring-secondary'
+									: 'border-secondary focus:ring-borderFocus'
 							}`}
 							onChange={e => handleInputChange('lastName', e.target.value)}
 						/>
@@ -192,10 +170,10 @@ const Form: React.FC = () => {
 							type='email'
 							id='email'
 							name='email'
-							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border-2 ${
+							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border  ${
 								formErrors.email
 									? 'border-warning border-2 focus-ring-2 focus:border-warning bg-backgroundError'
-									: 'border-secondary focus:ring-secondary'
+									: 'border-secondary focus:ring-borderFocus'
 							}`}
 							value={formData.email}
 							onChange={e => handleInputChange('email', e.target.value)}
@@ -221,19 +199,19 @@ const Form: React.FC = () => {
 								setTooltipValue(e.target.value)
 								updateTooltipPosition(e.target.value)
 							}}
-							className='custom-range w-full py-3 mt-1 focus:outline-none bg accent-accent focus-secondary bg-primary'
+							className='custom-range w-full py-3 mt-2 focus:outline-none bg accent-accent focus-secondary bg-primary'
 						/>
 						<div
 							className='absolute top-7 mt-8 transform -translate-x-1/2 border-b-secondary'
 							style={{ left: `calc(${tooltipPosition}% + 8px)` }}>
-							<div className='relative bg-white border border-secondary text-primary text-xs text-center rounded py-1 w-8'>
+							<div className='relative bg-white border border-secondary text-accent text-xs text-center rounded py-1 w-8'>
 								{tooltipValue}
 								<div className='absolute -top-1 left-1/2 transform -translate-x-1/2 rotate-45 w-2 h-2 bg-white border border-secondary border-r-0 border-b-0'></div>
 							</div>
 						</div>
 					</div>
 					<div className='mb-4'>
-						<label className='block text-sm text-primary'>Photo</label>
+						<label className='block text-sm text-primary mt-8'>Photo</label>
 						<div
 							className='border border-secondary rounded-lg p-4 text-center text-secondary bg-white'
 							onDrop={handleDrop}
@@ -241,15 +219,21 @@ const Form: React.FC = () => {
 							<input type='file' onChange={handleFileChange} className='hidden' id='file-upload' />
 							{!formData.photo && (
 								<label htmlFor='file-upload' className='cursor-pointer'>
-									<span className='text-accent underline'>Upload a file</span>{' '}
-									<span className='text-textGray'>or drag and drop here</span>
+									<span className='text-accent underline'>Upload a file </span>
+									<span className='text-textGray hidden md:inline'>&nbsp; or drag and drop here</span>
 								</label>
 							)}
 							{formData.photo && (
-								<div className='mt-2 flex items-center justify-between'>
-									<p className='text-gray-600'>{formData.photo.name}</p>
+								<div className='mt-2 flex items-center justify-center'>
+									<p className='text-primary pr-1'>{formData.photo.name}</p>
 									<button onClick={e => setFormData({ ...formData, photo: null })}>
-										<img src='./assets/delete.svg' alt='delete icon' className='w-4 h-4' />
+										<img
+											src={deleteIconSrc}
+											onMouseEnter={() => setDeleteIconSrc('./assets/deleteHover.svg')}
+											onMouseLeave={() => setDeleteIconSrc('./assets/delete.svg')}
+											alt='delete icon'
+											className='w-4 h-4'
+										/>
 									</button>
 								</div>
 							)}
@@ -257,41 +241,45 @@ const Form: React.FC = () => {
 					</div>
 
 					<Header text='Your workout' />
-					<label className='block text-sm text-primary'>Date</label>
-					<CustomDatePicker />
 
-					{formData.date && (
-						<div>
-							<label htmlFor='email' className='block text-sm text-primary'>
-								Time
-							</label>
-							{times.map((time, i) => (
-								<button
-									key={i}
-									type='button'
-									onClick={() => handleTimeClick(time)}
-									className={`rounded border p-1 m-1 border-secondary inline text-primary focus-primary bg-white hover:border-accent ${
-										formData.hour === time ? 'ring-1 ring-accent' : ''
-									}`}>
-									{time}
-								</button>
-							))}
+					<section className='flex flex-col md:flex-row md:items-start gap-4'>
+						<div className='flex-1'>
+							<label className='block text-sm text-primary'>Date</label>
+							<CustomDatePicker setFormData={setFormData} formData={formData} />
 						</div>
-					)}
+						{formData.date && (
+							<div className='flex-1'>
+								<label htmlFor='email' className='block text-sm text-primary'>
+									Time
+								</label>
+								{times.map((time, i) => (
+									<button
+										key={i}
+										type='button'
+										onClick={() => handleTimeClick(time)}
+										className={`rounded border m-1 border-secondary inline text-primary focus-primary bg-white hover:border-accent h-12 w-20 ${
+											formData.hour === time ? 'ring-1 ring-accent' : ''
+										}`}>
+										{time}
+									</button>
+								))}
+							</div>
+						)}
+					</section>
 
 					<div>
 						<button
 							type='submit'
 							disabled={isSubmitBtnDisabled}
 							className={`w-full px-4 py-2 font-semibold text-white  rounded  focus:outline-none focus:primary ${
-								isSubmitBtnDisabled ? 'bg-secondary' : 'bg-accent hover:bg-accent'
+								isSubmitBtnDisabled ? 'bg-secondary' : 'bg-accent hover:bg-btnHover'
 							}`}>
 							Send Application
 						</button>
 					</div>
 				</form>
 			</div>
-		</section>
+		</main>
 	)
 }
 
