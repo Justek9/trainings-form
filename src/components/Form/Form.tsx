@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { ChangeEvent, useEffect, useState } from 'react'
 import Header from '../Header/Header'
 
 type FormData = {
 	name: string
 	lastName: string
 	email: string
-	age: string
+	age: string | number
 	photo: File | null
 	date: string
 	hour: string
@@ -32,6 +32,19 @@ const Form: React.FC = () => {
 		hour: '',
 	})
 
+	const [tooltipValue, setTooltipValue] = useState<number | string>(formData.age)
+	const [tooltipPosition, setTooltipPosition] = useState(0)
+
+	useEffect(() => {
+		updateTooltipPosition(formData.age)
+	}, [formData.age])
+
+	const updateTooltipPosition = (value: number | string) => {
+		const min = 8
+		const max = 100
+		const newPosition = ((Number(value) - min) / (max - min)) * 100
+		setTooltipPosition(newPosition)
+	}
 	const validateForm = () => {
 		let valid = true
 		if (formData.name.trim() === '') {
@@ -191,20 +204,33 @@ const Form: React.FC = () => {
 							min='8'
 							max='100'
 							value={formData.age}
-							onChange={e => setFormData({ ...formData, age: e.target.value })}
-							className='w-full py-3 mt-1 focus:outline-none bg-secondary accent-accent focus-secondary'
+							onChange={e => {
+								setFormData({ ...formData, age: e.target.value })
+								setTooltipValue(e.target.value)
+								updateTooltipPosition(e.target.value)
+							}}
+							className='w-full py-3 mt-1 focus:outline-none bg accent-accent focus-secondary bg-primary'
 						/>
+						<div
+							className='absolute top-7 left-2 mt-8 transform -translate-x-1/2 border-b-secondary'
+							style={{ left: `calc(${tooltipPosition}% + 6px)` }}>
+							<div className='relative bg-white border border-secondary text-primary text-xs text-center rounded px-2 py-1 w-8'>
+								{tooltipValue}
+								<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-b-4 border-b-secondary'></div>
+							</div>
+						</div>
 					</div>
 					<div className='mb-4'>
 						<label className='block text-sm text-primary'>Photo</label>
 						<div
-							className='border-secondary rounded-lg p-4 text-center text-purple-600 bg-purple-50'
+							className='border border-secondary rounded-lg p-4 text-center text-secondary bg-white'
 							onDrop={handleDrop}
 							onDragOver={handleDragOver}>
 							<input type='file' onChange={handleFileChange} className='hidden' id='file-upload' />
 							{!formData.photo && (
 								<label htmlFor='file-upload' className='cursor-pointer'>
-									<span className='text-accent underline'>Upload a file</span> or drag and drop here
+									<span className='text-accent underline'>Upload a file</span>{' '}
+									<span className='text-textGray'>or drag and drop here</span>
 								</label>
 							)}
 							{formData.photo && (
@@ -235,7 +261,7 @@ const Form: React.FC = () => {
 								key={i}
 								type='button'
 								onClick={() => handleTimeClick(time)}
-								className={`rounded border p-1 m-1 border-secondary inline text-primary focus-primary hover:border-accent ${
+								className={`rounded border p-1 m-1 border-secondary inline text-primary focus-primary bg-white hover:border-accent ${
 									formData.hour === time ? 'ring-1 ring-accent' : ''
 								}`}>
 								{time}
