@@ -1,53 +1,44 @@
 import React, { ChangeEvent, useEffect, useState } from 'react'
 import Header from '../Header/Header'
 import CustomDatePicker from '../DatePicker/CustomDatePicker'
-
-type FormData = {
-	name: string
-	lastName: string
-	email: string
-	age: string | number
-	photo: File | null
-	date: string
-	hour: string
-}
+import { Data, FormErrors } from '../../types'
+import { API_KEY_DATA, URL_POST_FD, countryCode, maxAge, minAge, times, yearSelected } from '../../utilsData'
+import ErrorMessage from '../ErrorMessage/ErrorMessage'
+import { validateForm } from '../../helperfunctions'
 
 const Form: React.FC = () => {
-	const [formData, setFormData] = useState<FormData>({
+	const [formData, setFormData] = useState<Data>({
 		name: '',
 		lastName: '',
 		email: '',
-		age: '8',
+		age: minAge,
 		photo: null,
-		date: '2024-07-17',
+		date: '2024-07-18',
 		hour: '',
 	})
 
-	const [formErrors, setFormErrors] = useState({
+	const [formErrors, setFormErrors] = useState<FormErrors>({
 		name: '',
 		lastName: '',
 		email: '',
 		age: '',
-		photo: null,
+		photo: '',
 		date: '',
 		hour: '',
 	})
 
-	const [holiday, setHolidays] = useState(null)
+	const [isSubmitBtnDisabled, setIsSubmitBtnDisabled] = useState(false)
+	const [holidays, setHolidays] = useState(null)
 
 	const getHolidays = () => {
-		const country = 'PL'
-		const year = '2024'
-		const API_KEY = '8DX8eEe67njS1lbThFsdSw==rQQNpQ8PYbPZBjrx'
-
 		const options = {
 			method: 'GET',
 			headers: {
-				'X-Api-Key': API_KEY,
+				'X-Api-Key': API_KEY_DATA,
 			},
 		}
 
-		fetch(`https://api.api-ninjas.com/v1/holidays?country=${country}&year=${year}`, options)
+		fetch(`https://api.api-ninjas.com/v1/holidays?country=${countryCode}&year=${yearSelected}`, options)
 			.then(res => res.json())
 			.then(data => setHolidays(data))
 			.catch(err => console.log(err))
@@ -72,40 +63,14 @@ const Form: React.FC = () => {
 	}, [formData.age])
 
 	const updateTooltipPosition = (value: number | string) => {
-		const min = 8
-		const max = 100
+		const min = Number(minAge)
+		const max = Number(maxAge)
+
 		const newPosition = ((Number(value) - min) / (max - min)) * 100
+
 		console.log(newPosition)
 		setTooltipPosition(newPosition)
 	}
-	const validateForm = () => {
-		let valid = true
-		if (formData.name.trim() === '') {
-			setFormErrors(prevErrors => ({
-				...prevErrors,
-				name: 'Please enter your first name.',
-			}))
-			return (valid = false)
-		}
-		if (formData.lastName.trim() === '') {
-			setFormErrors(prevErrors => ({
-				...prevErrors,
-				lastName: 'Please enter your last name.',
-			}))
-			return (valid = false)
-		}
-		if (formData.email.trim() === '' || !formData.email.includes('@')) {
-			setFormErrors(prevErrors => ({
-				...prevErrors,
-				email: 'Please use correct formatting. Example: address@email.com',
-			}))
-			return (valid = false)
-		}
-		return valid
-	}
-
-	const times = ['12:00', '14:00', '16:30', '18:30', '20:00']
-	const [isSubmitBtnDisabled, setIsSubmitBtnDisabled] = useState(false)
 
 	const isSendApplicationBtnDisabled = () => {
 		const { name, lastName, email, age, photo, date, hour } = formData
@@ -113,9 +78,9 @@ const Form: React.FC = () => {
 		allFilled ? setIsSubmitBtnDisabled(false) : setIsSubmitBtnDisabled(true)
 	}
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		if (e.target.files && e.target.files.length > 0) {
-			const file = e.target.files[0]
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (event.target.files && event.target.files.length > 0) {
+			const file = event.target.files[0]
 			setFormData({ ...formData, photo: file })
 		} else {
 			setFormData({ ...formData, photo: null })
@@ -125,14 +90,6 @@ const Form: React.FC = () => {
 
 	const handleTimeClick = (time: string) => {
 		setFormData({ ...formData, hour: time })
-	}
-
-	const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault()
-		// TO DO:add logic
-
-		console.log('Form submitted')
-		validateForm()
 	}
 
 	const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -146,10 +103,33 @@ const Form: React.FC = () => {
 		event.preventDefault()
 	}
 
-	useEffect(() => {
-		// isSendApplicationBtnDisabled()
-		// validateForm()
-	}, [formData])
+	const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		validateForm(formData, setFormErrors)
+
+		const fd = new FormData()
+		fd.append('name', formData.name)
+		fd.append('lastName', formData.lastName)
+		fd.append('email', formData.email)
+		fd.append('age', formData.age)
+		fd.append('photo', formData.photo!)
+		fd.append('date', formData.date)
+		fd.append('hour', formData.hour)
+
+		console.log(fd)
+		const options = {
+			method: 'POST',
+			body: fd,
+		}
+
+		fetch(URL_POST_FD, options)
+			.then(res => {
+				if (res.status === 200) {
+					console.log('success')
+				}
+			})
+			.catch(() => console.log('error'))
+	}
 
 	return (
 		<section className='flex items-center justify-center min-h-screen bg-backgroud'>
@@ -171,12 +151,7 @@ const Form: React.FC = () => {
 									: 'border-secondary focus:ring-secondary'
 							}`}
 						/>
-						{formErrors.name && (
-							<div className='flex items-center space-x-2 pt-1'>
-								<img src='./assets/error-icon-warning.svg' alt='icon warning' />
-								<p className='text-primary text-xs'>{formErrors.name}</p>
-							</div>
-						)}
+						{formErrors.name && <ErrorMessage message={formErrors.name} />}
 					</div>
 					<div>
 						<label htmlFor='lastName' className='block text-sm text-primary'>
@@ -193,12 +168,7 @@ const Form: React.FC = () => {
 							}`}
 							onChange={e => setFormData({ ...formData, lastName: e.target.value })}
 						/>
-						{formErrors.lastName && (
-							<div className='flex items-center space-x-2 pt-1'>
-								<img src='./assets/error-icon-warning.svg' alt='icon warning' />
-								<p className='text-primary text-xs'>{formErrors.lastName}</p>
-							</div>
-						)}
+						{formErrors.lastName && <ErrorMessage message={formErrors.lastName} />}
 					</div>
 					<div>
 						<label htmlFor='email' className='block text-sm text-primary'>
@@ -216,12 +186,7 @@ const Form: React.FC = () => {
 							value={formData.email}
 							onChange={e => setFormData({ ...formData, email: e.target.value })}
 						/>
-						{formErrors.email && (
-							<div className='flex items-center space-x-2 pt-1'>
-								<img src='./assets/error-icon-warning.svg' alt='icon warning' />
-								<p className='text-primary text-xs'>{formErrors.email}</p>
-							</div>
-						)}
+						{formErrors.email && <ErrorMessage message={formErrors.email} />}
 					</div>
 					<div className='relative'>
 						<label htmlFor='age' className='block text-sm text-primary'>
@@ -285,34 +250,32 @@ const Form: React.FC = () => {
 								</div>
 							)}
 						</div>
-						{formErrors.photo && (
-							<div className='flex items-center space-x-2 pt-1'>
-								<img src='./assets/error-icon-warning.svg' alt='icon warning' />
-								<p className='text-primary text-xs'>{formErrors.photo}</p>
-							</div>
-						)}
+						{formErrors.photo && <ErrorMessage message={formErrors.photo} />}
 					</div>
 
 					<Header text='Your workout' />
 					<label className='block text-sm text-primary'>Date</label>
-					<CustomDatePicker  />
+					<CustomDatePicker />
 
-					<div>
-						<label htmlFor='email' className='block text-sm text-primary'>
-							Time
-						</label>
-						{times.map((time, i) => (
-							<button
-								key={i}
-								type='button'
-								onClick={() => handleTimeClick(time)}
-								className={`rounded border p-1 m-1 border-secondary inline text-primary focus-primary bg-white hover:border-accent ${
-									formData.hour === time ? 'ring-1 ring-accent' : ''
-								}`}>
-								{time}
-							</button>
-						))}
-					</div>
+					{formData.date && (
+						<div>
+							<label htmlFor='email' className='block text-sm text-primary'>
+								Time
+							</label>
+							{times.map((time, i) => (
+								<button
+									key={i}
+									type='button'
+									onClick={() => handleTimeClick(time)}
+									className={`rounded border p-1 m-1 border-secondary inline text-primary focus-primary bg-white hover:border-accent ${
+										formData.hour === time ? 'ring-1 ring-accent' : ''
+									}`}>
+									{time}
+								</button>
+							))}
+							{formErrors.hour && <ErrorMessage message={formErrors.hour} />}
+						</div>
+					)}
 
 					<div>
 						<button

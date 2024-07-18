@@ -38,14 +38,12 @@ body {
 	cursor: pointer;
 	-webkit-appearance: none;
 	appearance: none;
-	margin-top: -4px; /* Adjust to align with the track */
+	margin-top: -4px; 
 }
 
 .custom-range::-moz-range-thumb {
 	width: 20px;
 	height: 20px;
-	// background: #fff;
-	// border: 2px solid #4a90e2; /* Change this to match the track color or any other color */
 	border-radius: 50%;
 	cursor: pointer;
 }
@@ -53,8 +51,6 @@ body {
 .custom-range::-ms-thumb {
 	width: 20px;
 	height: 20px;
-	// background: #fff;
-	// border: 2px solid #4a90e2; /* Change this to match the track color or any other color */
 	border-radius: 50%;
 	cursor: pointer;
 }
