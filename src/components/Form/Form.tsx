@@ -5,6 +5,7 @@ import { Data, FormErrors } from '../../types'
 import { API_KEY_DATA, URL_POST_FD, countryCode, maxAge, minAge, times, yearSelected } from '../../utilsData'
 import ErrorMessage from '../ErrorMessage/ErrorMessage'
 import { validateForm } from '../../helperfunctions'
+import { set } from 'react-datepicker/dist/date_utils'
 
 const Form: React.FC = () => {
 	const [formData, setFormData] = useState<Data>({
@@ -21,13 +22,9 @@ const Form: React.FC = () => {
 		name: '',
 		lastName: '',
 		email: '',
-		age: '',
-		photo: '',
-		date: '',
-		hour: '',
 	})
 
-	const [isSubmitBtnDisabled, setIsSubmitBtnDisabled] = useState(false)
+	const [isSubmitBtnDisabled, setIsSubmitBtnDisabled] = useState(true)
 	const [holidays, setHolidays] = useState(null)
 
 	const getHolidays = () => {
@@ -62,6 +59,10 @@ const Form: React.FC = () => {
 		updateTooltipPosition(formData.age)
 	}, [formData.age])
 
+	useEffect(() => {
+		isSendApplicationBtnDisabled()
+	}, [formData])
+
 	const updateTooltipPosition = (value: number | string) => {
 		const min = Number(minAge)
 		const max = Number(maxAge)
@@ -74,7 +75,18 @@ const Form: React.FC = () => {
 
 	const isSendApplicationBtnDisabled = () => {
 		const { name, lastName, email, age, photo, date, hour } = formData
-		const allFilled = name && lastName && email && age && photo && date && hour
+
+		const allFilled =
+			name &&
+			lastName &&
+			email &&
+			age &&
+			photo &&
+			date &&
+			hour &&
+			!formErrors.name &&
+			!formErrors.lastName &&
+			!formErrors.email
 		allFilled ? setIsSubmitBtnDisabled(false) : setIsSubmitBtnDisabled(true)
 	}
 
@@ -85,7 +97,6 @@ const Form: React.FC = () => {
 		} else {
 			setFormData({ ...formData, photo: null })
 		}
-		isSendApplicationBtnDisabled()
 	}
 
 	const handleTimeClick = (time: string) => {
@@ -105,7 +116,6 @@ const Form: React.FC = () => {
 
 	const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		validateForm(formData, setFormErrors)
 
 		const fd = new FormData()
 		fd.append('name', formData.name)
@@ -116,7 +126,6 @@ const Form: React.FC = () => {
 		fd.append('date', formData.date)
 		fd.append('hour', formData.hour)
 
-		console.log(fd)
 		const options = {
 			method: 'POST',
 			body: fd,
@@ -129,6 +138,11 @@ const Form: React.FC = () => {
 				}
 			})
 			.catch(() => console.log('error'))
+	}
+
+	const handleInputChange = (fieldName: string, value: string) => {
+		setFormData({ ...formData, [fieldName]: value })
+		validateForm({ ...formData, [fieldName]: value }, setFormErrors)
 	}
 
 	return (
@@ -144,7 +158,7 @@ const Form: React.FC = () => {
 							type='text'
 							id='name'
 							value={formData.name}
-							onChange={e => setFormData({ ...formData, name: e.target.value })}
+							onChange={e => handleInputChange('name', e.target.value)}
 							className={`w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:border-2  ${
 								formErrors.name
 									? 'border-warning border-2 focus-ring-2 focus:border-warning bg-backgroundError'
@@ -166,7 +180,7 @@ const Form: React.FC = () => {
 									? 'border-warning border-2 focus-ring-2 focus:border-warning bg-backgroundError'
 									: 'border-secondary focus:ring-secondary'
 							}`}
-							onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+							onChange={e => handleInputChange('lastName', e.target.value)}
 						/>
 						{formErrors.lastName && <ErrorMessage message={formErrors.lastName} />}
 					</div>
@@ -184,7 +198,7 @@ const Form: React.FC = () => {
 									: 'border-secondary focus:ring-secondary'
 							}`}
 							value={formData.email}
-							onChange={e => setFormData({ ...formData, email: e.target.value })}
+							onChange={e => handleInputChange('email', e.target.value)}
 						/>
 						{formErrors.email && <ErrorMessage message={formErrors.email} />}
 					</div>
@@ -196,12 +210,11 @@ const Form: React.FC = () => {
 						<span className='text-xs text-primary absolute end-0'>100</span>
 
 						<input
-							data-tooltip-target='tooltip-dark'
 							type='range'
 							id='age'
 							name='age'
-							min='8'
-							max='100'
+							min={minAge}
+							max={maxAge}
 							value={formData.age}
 							onChange={e => {
 								setFormData({ ...formData, age: e.target.value })
@@ -211,22 +224,13 @@ const Form: React.FC = () => {
 							className='custom-range w-full py-3 mt-1 focus:outline-none bg accent-accent focus-secondary bg-primary'
 						/>
 						<div
-							id='tooltip-dark'
-							role='tooltip'
-							className='absolute z-10  inline-block px-2 py-1 text-sm font-medium text-accent bg-white rounded-lg shadow-sm  tooltip dark:bg-gray-700'
-							data-tooltip-placement='bottom'
-							style={{ left: `calc(${tooltipPosition}% - 8px)` }}>
-							{tooltipValue}
-							<div className='tooltip-arrow' data-popper-arrow></div>
-						</div>
-						{/* <div
 							className='absolute top-7 mt-8 transform -translate-x-1/2 border-b-secondary'
 							style={{ left: `calc(${tooltipPosition}% + 8px)` }}>
-							<div className='relative bg-white border border-secondary text-primary text-xs text-center rounded px-2 py-1 w-8'>
+							<div className='relative bg-white border border-secondary text-primary text-xs text-center rounded py-1 w-8'>
 								{tooltipValue}
-								<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-b-4 border-b-secondary'></div>
+								<div className='absolute -top-1 left-1/2 transform -translate-x-1/2 rotate-45 w-2 h-2 bg-white border border-secondary border-r-0 border-b-0'></div>
 							</div>
-						</div> */}
+						</div>
 					</div>
 					<div className='mb-4'>
 						<label className='block text-sm text-primary'>Photo</label>
@@ -250,7 +254,6 @@ const Form: React.FC = () => {
 								</div>
 							)}
 						</div>
-						{formErrors.photo && <ErrorMessage message={formErrors.photo} />}
 					</div>
 
 					<Header text='Your workout' />
@@ -273,7 +276,6 @@ const Form: React.FC = () => {
 									{time}
 								</button>
 							))}
-							{formErrors.hour && <ErrorMessage message={formErrors.hour} />}
 						</div>
 					)}
 
@@ -281,8 +283,8 @@ const Form: React.FC = () => {
 						<button
 							type='submit'
 							disabled={isSubmitBtnDisabled}
-							className={`w-full px-4 py-2 font-semibold text-white bg-secondary rounded hover:bg-accent focus:outline-none focus:primary ${
-								isSubmitBtnDisabled ? '' : 'bg-accent'
+							className={`w-full px-4 py-2 font-semibold text-white  rounded  focus:outline-none focus:primary ${
+								isSubmitBtnDisabled ? 'bg-secondary' : 'bg-accent hover:bg-accent'
 							}`}>
 							Send Application
 						</button>

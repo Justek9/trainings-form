@@ -1,50 +1,41 @@
 import { Data, FormErrors } from './types'
 
+const containsNumbers = (str: string) => {
+	const regex = /\d/
+	return regex.test(str)
+}
+
+const isValidEmail = (email: string) => {
+	const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+	return regex.test(email)
+}
 export const validateForm = (formData: Data, setFormErrors: React.Dispatch<React.SetStateAction<FormErrors>>) => {
-	let valid = true
-	if (formData.name.trim() === '') {
-		setFormErrors(prevErrors => ({
-			...prevErrors,
-			name: 'Please enter your first name.',
-		}))
-		return (valid = false)
-	}
-	if (formData.lastName.trim() === '') {
-		setFormErrors(prevErrors => ({
-			...prevErrors,
-			lastName: 'Please enter your last name.',
-		}))
-		return (valid = false)
-	}
-	if (formData.email.trim() === '' || !formData.email.includes('@')) {
-		setFormErrors(prevErrors => ({
-			...prevErrors,
-			email: 'Please use correct formatting. Example: address@email.com',
-		}))
-		return (valid = false)
+	const errors = {
+		name: '',
+		lastName: '',
+		email: '',
 	}
 
-	if (!formData.photo) {
-		setFormErrors(prevErrors => ({
-			...prevErrors,
-			photo: 'Please upload photo',
-		}))
-		return (valid = false)
+	if (containsNumbers(formData.name)) {
+		errors.name = 'Name can not contain numbers'
+	}
+	if (containsNumbers(formData.lastName)) {
+		errors.lastName = 'Last name can not contain numbers'
 	}
 
-	if (formData.date.trim() === '') {
-		setFormErrors(prevErrors => ({
-			...prevErrors,
-			date: 'Please pick date',
-		}))
-		return (valid = false)
+	if (formData.email && !isValidEmail(formData.email)) {
+		errors.email = 'Please use correct formatting. <br /> Example: address@email.com'
 	}
-	if (formData.hour.trim() === '') {
-		setFormErrors(prevErrors => ({
-			...prevErrors,
-			hour: 'Please pick hour',
-		}))
-		return (valid = false)
+
+	setFormErrors({ ...errors })
+
+	console.log('ED', errors)
+	console.log('FD', formData)
+
+	let isValid = true
+	for (let val in Object.values(errors)) {
+		if (val.length > 0) isValid = false
 	}
-	return valid
+
+	return isValid
 }
