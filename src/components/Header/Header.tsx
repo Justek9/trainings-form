@@ -1,8 +1,8 @@
-type headerProps = {
+type HeaderProps = {
 	text: string
 }
 
-const Header = ({ text }: headerProps) => {
+const Header: React.FC<HeaderProps> = ({ text }) => {
 	return <p className='text-2xl font-medium text-primary'>{text}</p>
 }
 

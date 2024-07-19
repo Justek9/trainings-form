@@ -9,9 +9,7 @@ export type Data = {
 }
 
 export type FormErrors = {
-	name: string
-	lastName: string
-	email: string
+	[key: string]: string
 }
 
 export type Holiday = {

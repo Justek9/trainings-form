@@ -72,7 +72,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ setFormData, formDa
 
 	return (
 		<>
-			<div className='p-6 max-w-xs bg-white border border-secondary rounded-md w-full'>
+			<div className='p-6 max-w-xs bg-white border border-secondary rounded-md w-full flex justify-center items-center'>
 				<DatePicker
 					selected={selectedDate}
 					onChange={handleDateChange}
